@@ -84,6 +84,9 @@ sniffer:                                                  # 域名嗅探配置
 tun:                                                      # TUN 系统级接管配置
   enable: true                                            # 启用当前模块
   stack: mixed                                            # 使用 mixed 网络栈，兼顾性能与兼容性
+  auto-route: true                                        # 自动配置系统路由，将流量导入 TUN
+  strict-route: true                                      # 启用严格路由规则
+  dns-mode: hijack                                        # 启用 DNS 劫持，如关闭只需注释即可切换为auto
   dns-hijack:                                             # 将普通 53 端口 DNS 请求交给 Mihomo DNS
     - any:53                                              # 劫持 UDP 53 DNS
     - tcp://any:53                                        # 劫持 TCP 53 DNS
