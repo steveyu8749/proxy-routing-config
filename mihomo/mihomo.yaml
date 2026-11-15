@@ -90,7 +90,6 @@ tun:                                                      # TUN 系统级接管�
   dns-hijack:                                             # 将普通 53 端口 DNS 请求交给 Mihomo DNS
     - any:53                                              # 劫持 UDP 53 DNS
     - tcp://any:53                                        # 劫持 TCP 53 DNS
-  auto-route: true                                        # 自动写入系统路由，把普通流量导入 TUN
   auto-detect-interface: true                             # 自动识别当前真实联网接口
   route-exclude-address:                                  # 这些目标网段完全绕过 TUN
     - 10.0.0.0/8                                          # RFC1918 私网
