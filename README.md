@@ -174,7 +174,7 @@ Shadowrocket 当前没有正规的「隐藏 VPN 图标」开关。开发者从 v
 
 GitHub Actions 固定使用 Mihomo **v1.19.33** 和 PyYAML 6.0.3，与当前使用的内核版本对齐。含 `dns-mode` 的配置需要 v1.19.33 或支持该参数的更新版本。每次相关改动会执行：
 
-1. Mihomo 仓库策略校验与 18 个故障注入测试；
+1. Mihomo 仓库策略校验、22 个故障注入测试与 8 个合法配置变体测试；
 2. 四份共享规则的 text → MRS 转换；
 3. Mihomo 核心 `-t` 真实配置检查；
 4. Shadowrocket 三份 classical 规则生成；
