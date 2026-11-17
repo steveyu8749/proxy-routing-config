@@ -1003,13 +1003,18 @@ def validate_tun(tun: dict[str, Any], errors: list[str]) -> None:
         "auto-detect-interface",
         "route-exclude-address",
     }
-    for key in sorted(set(tun) - expected_keys):
-        if key == "strict-route":
-            fail(errors, "tun.strict-route must remain omitted in the shared cross-platform template")
-        else:
-            fail(errors, f"tun contains an unexpected key: {key}")
+    optional_keys = {"strict-route", "dns-mode"}
+    for key in sorted(set(tun) - expected_keys - optional_keys):
+        fail(errors, f"tun contains an unexpected key: {key}")
     for key in sorted(expected_keys - set(tun)):
         fail(errors, f"tun is missing required key: {key}")
+
+    if "strict-route" in tun and not isinstance(tun["strict-route"], bool):
+        fail(errors, "tun.strict-route must be a boolean")
+    # Mihomo v1.19.33 listener/sing_tun/server.go accepts these modes.
+    # An omitted/empty mode selects the core default; literal 'auto' is invalid.
+    if "dns-mode" in tun and tun["dns-mode"] not in ("", "disabled", "native", "hijack"):
+        fail(errors, "tun.dns-mode must be one of: empty string, disabled, native, hijack")
 
     expected = {
         "enable": True,

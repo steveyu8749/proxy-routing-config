@@ -106,7 +106,8 @@ ProxyLite 是个人代理补充，不是主分类库。它放在全部专用服�
 ### TUN 与 Sniffer
 
 - TUN 使用 `mixed` 栈并接管 UDP/TCP 53。
-- 公共跨平台模板不启用 `strict-route`。它加强系统路由接管与防泄漏，不会让规则“匹配得更严格”，并可能影响 Windows 虚拟化或多宿主网络。确有防泄漏需求时可在个人副本按平台开启。
+- 当前配置启用 `strict-route: true`，加强系统路由接管与防泄漏，不改变规则匹配顺序；Windows 虚拟化或多宿主网络仍需按实际环境验证。
+- 当前配置使用 Mihomo v1.19.33 支持的 `dns-mode: hijack`，并保留 UDP/TCP 53 的 `dns-hijack`。校验器允许省略 `dns-mode`，或使用空字符串、`disabled`、`native`、`hijack`；省略表示使用核心默认行为，不要写成字面值 `auto`。
 - Sniffer 只恢复域名，不覆盖原始目标；没有预设 `skip-domain`。只有出现稳定可复现的误嗅探时，才增加最小范围例外。
 
 ### Clash Mi Android：小米互传
@@ -171,7 +172,7 @@ Shadowrocket 当前没有正规的「隐藏 VPN 图标」开关。开发者从 v
 
 ## 自动生成与校验
 
-GitHub Actions 固定使用 Mihomo **v1.19.29** 和 PyYAML 6.0.3。每次相关改动会执行：
+GitHub Actions 固定使用 Mihomo **v1.19.33** 和 PyYAML 6.0.3，与当前使用的内核版本对齐。含 `dns-mode` 的配置需要 v1.19.33 或支持该参数的更新版本。每次相关改动会执行：
 
 1. Mihomo 仓库策略校验与 18 个故障注入测试；
 2. 四份共享规则的 text → MRS 转换；
