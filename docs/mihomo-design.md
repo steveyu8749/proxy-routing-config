@@ -42,7 +42,7 @@ flowchart TD
 
 ## 核心版本
 
-建议使用 Mihomo Core v1.19.10 或更新版本，以获得 Fake-IP TUN 下 DIRECT TCP / UDP 的 `direct-nameserver` 重解析行为。CI 固定使用 v1.19.29，避免“本地解析器认为正确，但真实核心不接受”的情况。
+当前配置与 CI 对齐 Mihomo Core v1.19.33，包含该版本支持的 TUN `dns-mode` 参数，并保留 Fake-IP TUN 下 DIRECT TCP / UDP 的 `direct-nameserver` 重解析行为。使用更旧核心时不能仅凭配置加载成功判断新字段生效。
 
 ## TUN 与本机边界
 
@@ -60,7 +60,9 @@ TUN 作为手机和电脑的共同基线：
 
 Clash Verge Rev 等 GUI 客户端可能合并或覆写 TUN / DNS 字段，因此排障时必须查看最终运行配置。
 
-公共模板有意不设置 `strict-route`。它约束操作系统流量是否可能绕过 TUN，而不是改变 Mihomo 的规则匹配顺序；Linux/Android 上可加强路由接管，Windows 上则借助防火墙降低多宿主 DNS 泄漏，但可能干扰 VirtualBox 等网络。这个取舍依赖具体平台，不适合作为手机与电脑共用模板的默认不变量。
+当前配置保留 `strict-route: true`。它约束操作系统流量是否可能绕过 TUN，而不是改变 Mihomo 的规则匹配顺序；Linux/Android 上可加强路由接管，Windows 上则借助防火墙降低多宿主 DNS 泄漏，但可能干扰 VirtualBox 等网络。校验器接受布尔值或省略该选项，具体平台的连通性仍需实际验证。
+
+`dns-mode: hijack` 是 Mihomo v1.19.33 已支持的 TUN 参数，与现有 `dns-hijack` 一起保留。参数校验与该版本的 `listener/sing_tun/server.go` 对齐，接受空字符串、`disabled`、`native`、`hijack`，或省略该选项使用核心默认行为；字面值 `auto` 不在允许值中。GUI 客户端提供该选项时，也应核对最终运行配置。
 
 ## DNS / Fake-IP
 

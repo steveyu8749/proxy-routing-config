@@ -40,7 +40,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  MIHOMO_VERSION: v1.19.29
+  MIHOMO_VERSION: v1.19.33
 
 jobs:
   validate:

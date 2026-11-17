@@ -2,6 +2,8 @@
 
 ## V5.1
 
+- CI 内核升级至 Mihomo v1.19.33，与当前使用版本对齐；保留现有 Mihomo 配置文件及其 `strict-route: true`、`dns-mode: hijack`。
+- TUN 校验支持 `strict-route` 布尔值与 v1.19.33 的 `dns-mode` 合法值，继续拒绝未知字段和非法类型；回归测试覆盖合法选项、可选字段省略及非法值，去除原 strict-route 测试对 auto-route 中文注释的依赖。
 - 重新按当前 Shadowrocket 社区手册与 blackmatrix7 上游结构审核小火箭配置。
 - 修复 Apple、Global、China 只加载 classical `.list` 的覆盖缺口；按上游要求新增三份 `*_Domain.list`，分别使用 `DOMAIN-SET` 与原 `RULE-SET` 共同加载。
 - 新增 `udp-policy-not-supported-behaviour = REJECT`，避免代理策略的 UDP 在节点不支持时静默降级为直连。

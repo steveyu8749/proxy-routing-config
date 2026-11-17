@@ -90,13 +90,23 @@ def add_skip_domain(text: str) -> str:
     return replace_once(text, anchor, replacement)
 
 
-def add_strict_route(text: str) -> str:
-    anchor = "  auto-route: true                                        # 自动写入系统路由，把普通流量导入 TUN\n"
-    replacement = (
-        anchor
-        + "  strict-route: true                                      # regression test: platform-specific override\n"
+def set_tun_field(text: str, key: str, value: str | None) -> str:
+    lines = text.splitlines(keepends=True)
+    in_tun = False
+    matches = []
+    for index, line in enumerate(lines):
+        if line.startswith("tun:"):
+            in_tun = True
+        elif line.strip() and not line.startswith((" ", "#")):
+            in_tun = False
+        if in_tun and line.startswith(f"  {key}:"):
+            matches.append(index)
+    if len(matches) != 1:
+        raise AssertionError(f"expected exactly one tun.{key} field")
+    lines[matches[0]] = (
+        "" if value is None else f"  {key}: {value}  # regression test: TUN option\n"
     )
-    return replace_once(text, anchor, replacement)
+    return "".join(lines)
 
 
 def disable_lazy_health_check(text: str) -> str:
@@ -160,10 +170,34 @@ TEST_CASES: list[tuple[str, str, Callable[[str], str], str]] = [
         "sniffer.skip-domain must remain omitted",
     ),
     (
-        "cross-platform strict-route override",
+        "strict-route string instead of boolean",
         "mihomo/mihomo.yaml",
-        add_strict_route,
-        "tun.strict-route must remain omitted",
+        lambda text: set_tun_field(text, "strict-route", '"true"'),
+        "tun.strict-route must be a boolean",
+    ),
+    (
+        "strict-route integer instead of boolean",
+        "mihomo/mihomo.yaml",
+        lambda text: set_tun_field(text, "strict-route", "1"),
+        "tun.strict-route must be a boolean",
+    ),
+    (
+        "unsupported literal auto DNS mode",
+        "mihomo/mihomo.yaml",
+        lambda text: set_tun_field(text, "dns-mode", "auto"),
+        "tun.dns-mode must be one of",
+    ),
+    (
+        "DNS mode list instead of string",
+        "mihomo/mihomo.yaml",
+        lambda text: set_tun_field(text, "dns-mode", "[hijack]"),
+        "tun.dns-mode must be one of",
+    ),
+    (
+        "unknown TUN field",
+        "mihomo/mihomo.yaml",
+        lambda text: replace_once(text, "  dns-mode:", "  dns-mdoe:"),
+        "tun contains an unexpected key: dns-mdoe",
     ),
     (
         "eager provider health checks",
@@ -257,10 +291,24 @@ def main() -> int:
         print(baseline.stdout + baseline.stderr)
         return 1
 
+    accepted_cases = [
+        (f"supported DNS mode {mode}", "mihomo/mihomo.yaml",
+         lambda text, mode=mode: set_tun_field(text, "dns-mode", mode), None)
+        for mode in ('""', "disabled", "native", "hijack")
+    ] + [
+        ("optional DNS mode omitted", "mihomo/mihomo.yaml",
+         lambda text: set_tun_field(text, "dns-mode", None), None),
+        ("strict-route disabled", "mihomo/mihomo.yaml",
+         lambda text: set_tun_field(text, "strict-route", "false"), None),
+        ("optional strict-route omitted", "mihomo/mihomo.yaml",
+         lambda text: set_tun_field(text, "strict-route", None), None),
+        ("auto-route comment changed", "mihomo/mihomo.yaml",
+         lambda text: set_tun_field(text, "auto-route", "true"), None),
+    ]
     failures: list[str] = []
     with tempfile.TemporaryDirectory(prefix="mihomo-validator-tests-") as directory:
         temp_root = Path(directory)
-        for index, (name, target, mutate, expected_message) in enumerate(TEST_CASES):
+        for index, (name, target, mutate, expected_message) in enumerate(TEST_CASES + accepted_cases):
             case_root = temp_root / f"case-{index}"
             shutil.copytree(
                 ROOT,
@@ -273,7 +321,10 @@ def main() -> int:
             )
             result = run_validator(case_root / "mihomo/mihomo.yaml")
             output = result.stdout + result.stderr
-            if result.returncode == 0:
+            if expected_message is None:
+                if result.returncode != 0:
+                    failures.append(f"{name}: valid configuration rejected:\n{output.strip()}")
+            elif result.returncode == 0:
                 failures.append(f"{name}: validator incorrectly accepted the mutation")
             elif expected_message not in output:
                 failures.append(
@@ -286,7 +337,8 @@ def main() -> int:
             print(f"  - {failure}")
         return 1
 
-    print(f"Validator regression tests passed: {len(TEST_CASES)} mutations rejected")
+    print(f"Validator regression tests passed: {len(TEST_CASES)} mutations rejected, "
+          f"{len(accepted_cases)} valid variants accepted")
     return 0
 
 
